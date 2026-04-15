@@ -8,16 +8,16 @@
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
         .slider-container { margin-top: 50px; }
-        input[type="range"] { width: 300px; }
+        input[type="range"] { width: 300px; cursor: pointer; }
         .value-display { font-size: 24px; font-weight: bold; margin-top: 20px; color: #FF5500; }
     </style>
 </head>
 <body>
-    <h2>Điều khiển Slider V1</h2>
+    <h2>Điều khiển Slider V1 (Kiểu Joystick)</h2>
     
     <div class="slider-container">
-        <input type="range" id="mySlider" min="0" max="255" value="0">
-        <div class="value-display">Giá trị: <span id="sliderValue">0</span></div>
+        <input type="range" id="mySlider" min="0" max="255" value="127">
+        <div class="value-display">Giá trị: <span id="sliderValue">127</span></div>
     </div>
 
     <script src="script.js"></script>
