@@ -8,7 +8,7 @@ eraWidget.init({
     onConfiguration: (configuration) => {
         if (configuration.actions && configuration.actions.length > 0) {
             actionV1 = configuration.actions[0];
-            // Đảm bảo khi widget load xong, giao diện hiển thị đúng số 127
+            // Đảm bảo khi widget load xong, giao diện hiển thị đúng số 1500
             resetToCenter();
         }
     },
@@ -27,11 +27,11 @@ slider.addEventListener("input", function() {
 
 // 2. Hàm xử lý tự động về giữa (Joystick mode)
 function resetToCenter() {
-    const center = 127;
+    const center = 1500; // Đã đổi điểm cân bằng về 1500
     slider.value = center;
     valueDisplay.textContent = center;
 
-    // Gửi lệnh 127 xuống ESP32 ngay lập tức khi buông tay
+    // Gửi lệnh 1500 xuống ESP32 ngay lập tức khi buông tay
     if (actionV1) {
         eraWidget.triggerAction(actionV1.action, null, { value: center });
     }
