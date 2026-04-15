@@ -1,77 +1,161 @@
 const eraWidget = new EraWidget();
-let actionV1 = null; // Tiến Lùi
-let actionV2 = null; // Trái Phải
-let actionV3 = null; // Mode Auto/Manual
+let actionV1, actionV2, actionV3, actionV4;
 
-const labelLeft = document.getElementById('labelLeft');
-const labelRight = document.getElementById('labelRight');
+// Mảng chứa các UID đã thêm tạm thời chưa lưu
+let tempCheckpoints = []; 
+// Dữ liệu chính thức được lấy từ LocalStorage
+let savedCheckpoints = JSON.parse(localStorage.getItem('AGV_Checkpoints')) || [];
 
-// Khởi tạo E-Ra
+const uidInput = document.getElementById('uidInput');
+const checkpointListDiv = document.getElementById('checkpointList');
+const gotoListDiv = document.getElementById('gotoList');
+
 eraWidget.init({
-    onConfiguration: (configuration) => {
-        if (configuration.actions && configuration.actions.length >= 3) {
-            actionV1 = configuration.actions[0];
-            actionV2 = configuration.actions[1];
-            actionV3 = configuration.actions[2];
+    onConfiguration: (conf) => {
+        // Ánh xạ các chân điều khiển dựa theo thứ tự trên E-Ra config
+        if(conf.actions) {
+            actionV1 = conf.actions[0]; // Throttle (V1)
+            actionV2 = conf.actions[1]; // Steering (V2)
+            actionV3 = conf.actions[2]; // Mode & Goto (Numeric - V3)
+            if(conf.actions.length > 3) {
+                actionV4 = conf.actions[3]; // Gửi/Nhận UID String (V4)
+            }
+        }
+    },
+    onValues: (values) => {
+        // Lắng nghe dữ liệu UID gửi lên từ ESP32 qua chân V4
+        if (actionV4 && values[actionV4.id]) {
+            const receivedUID = values[actionV4.id].value;
+            // Nếu có dữ liệu trả về, tự động điền vào ô input
+            if (receivedUID && String(receivedUID).trim() !== "") {
+                uidInput.value = receivedUID;
+            }
         }
     }
 });
 
-// ================= HÀM GỬI LỆNH TRỰC TIẾP =================
-function sendV1(value) {
-    labelRight.textContent = value;
-    if (actionV1) eraWidget.triggerAction(actionV1.action, null, { value: value });
+// --- HÀM RENDER GIAO DIỆN ---
+function renderUI() {
+    // 1. Render danh sách thẻ Điểm A, B, C (hiển thị cả mảng temp)
+    checkpointListDiv.innerHTML = '';
+    let displayList = tempCheckpoints.length > 0 ? tempCheckpoints : savedCheckpoints;
+    
+    displayList.forEach((cp, index) => {
+        const letter = String.fromCharCode(65 + index);
+        const card = document.createElement('div');
+        card.className = 'point-card';
+        card.innerHTML = `
+            <span class="letter">${letter}</span>
+            <span class="uid-label">${cp.uid}</span>
+        `;
+        checkpointListDiv.appendChild(card);
+    });
+
+    // 2. Render Nút GOTO dựa trên dữ liệu ĐÃ LƯU
+    gotoListDiv.innerHTML = '';
+    if (savedCheckpoints.length === 0) {
+        gotoListDiv.innerHTML = '<div class="no-data-msg">Chưa có điểm lưu nào. Hãy quét UID và bấm LƯU DỮ LIỆU.</div>';
+    } else {
+        savedCheckpoints.forEach((cp, index) => {
+            const letter = String.fromCharCode(65 + index);
+            const btn = document.createElement('button');
+            btn.className = 'btn-goto';
+            btn.innerHTML = `GOTO ĐIỂM ${letter} <span class="uid-txt">[UID: ${cp.uid}]</span>`;
+            
+            // SỰ KIỆN KHI BẤM GOTO
+            btn.addEventListener('click', () => {
+                // Tạo hiệu ứng nháy
+                btn.style.background = "#FF5500";
+                setTimeout(() => btn.style.background = "", 300);
+
+                // Gửi lệnh Số qua V3 (A=2001, B=2002, C=2003...) để ESP32 biết điểm đến
+                let cmdNumeric = 2001 + index;
+                if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: cmdNumeric });
+                
+                // Gửi kèm lệnh Chuỗi UID thẳng qua V4 để dự phòng
+                if (actionV4) eraWidget.triggerAction(actionV4.action, null, { value: cp.uid });
+            });
+            gotoListDiv.appendChild(btn);
+        });
+    }
 }
 
-function sendV2(value) {
-    labelLeft.textContent = value;
-    if (actionV2) eraWidget.triggerAction(actionV2.action, null, { value: value });
-}
+// --- CÁC SỰ KIỆN NÚT BẤM AUTO ---
+// Thêm điểm vào mảng tạm
+document.getElementById('btnAdd').addEventListener('click', () => {
+    const uid = uidInput.value.trim();
+    if (uid === "") return alert("Vui lòng đợi quét hoặc nhập thủ công UID!");
+    
+    // Lấy danh sách hiện tại để nối tiếp
+    let currentList = tempCheckpoints.length > 0 ? tempCheckpoints : [...savedCheckpoints];
+    currentList.push({ uid: uid });
+    tempCheckpoints = currentList;
+    
+    uidInput.value = ""; // Xóa trắng sau khi thêm
+    renderUI();
+});
 
-// ================= GẮN SỰ KIỆN CHO TAY PHẢI (V1: TIẾN / LÙI) =================
-const btnUp = document.getElementById('btnUp');
-const btnDown = document.getElementById('btnDown');
-const centerV1 = 1494; // Điểm dừng tuyệt đối
+// Lưu Dữ Liệu
+document.getElementById('btnSave').addEventListener('click', () => {
+    if (tempCheckpoints.length > 0) {
+        savedCheckpoints = [...tempCheckpoints];
+        localStorage.setItem('AGV_Checkpoints', JSON.stringify(savedCheckpoints));
+        tempCheckpoints = []; // Xóa tạm
+        alert("Đã lưu lộ trình thành công!");
+        renderUI();
+    } else {
+        alert("Bạn chưa thêm điểm mới nào!");
+    }
+});
 
-// Nút Tiến
-btnUp.addEventListener('pointerdown', () => { btnUp.classList.add('active'); sendV1(2025); });
-btnUp.addEventListener('pointerup', () => { btnUp.classList.remove('active'); sendV1(centerV1); });
-btnUp.addEventListener('pointerleave', () => { btnUp.classList.remove('active'); sendV1(centerV1); });
+// Reset
+document.getElementById('btnReset').addEventListener('click', () => {
+    if(confirm("Bạn có chắc muốn xóa toàn bộ lộ trình đã lưu? AGV sẽ không còn điểm để Goto.")) {
+        tempCheckpoints = [];
+        savedCheckpoints = [];
+        localStorage.removeItem('AGV_Checkpoints');
+        renderUI();
+    }
+});
 
-// Nút Lùi
-btnDown.addEventListener('pointerdown', () => { btnDown.classList.add('active'); sendV1(1027); });
-btnDown.addEventListener('pointerup', () => { btnDown.classList.remove('active'); sendV1(centerV1); });
-btnDown.addEventListener('pointerleave', () => { btnDown.classList.remove('active'); sendV1(centerV1); });
-
-
-// ================= GẮN SỰ KIỆN CHO TAY TRÁI (V2: TRÁI / PHẢI) =================
-const btnLeft = document.getElementById('btnLeft');
-const btnRight = document.getElementById('btnRight');
-const centerV2 = 1497; // Điểm dừng tuyệt đối
-
-// Nút Rẽ Trái
-btnLeft.addEventListener('pointerdown', () => { btnLeft.classList.add('active'); sendV2(987); });
-btnLeft.addEventListener('pointerup', () => { btnLeft.classList.remove('active'); sendV2(centerV2); });
-btnLeft.addEventListener('pointerleave', () => { btnLeft.classList.remove('active'); sendV2(centerV2); });
-
-// Nút Rẽ Phải
-btnRight.addEventListener('pointerdown', () => { btnRight.classList.add('active'); sendV2(1983); });
-btnRight.addEventListener('pointerup', () => { btnRight.classList.remove('active'); sendV2(centerV2); });
-btnRight.addEventListener('pointerleave', () => { btnRight.classList.remove('active'); sendV2(centerV2); });
-
-
-// ================= XỬ LÝ NÚT MODE AUTO/MANUAL (V3) =================
+// --- CHUYỂN CHẾ ĐỘ MANUAL / AUTO ---
+const autoPanel = document.getElementById('autoPanel');
+const manualPanel = document.getElementById('manualPanel');
 const btnManual = document.getElementById('btnManual');
 const btnAuto = document.getElementById('btnAuto');
 
 btnManual.addEventListener('click', () => {
     btnManual.classList.add('active-manual');
     btnAuto.classList.remove('active-auto');
-    if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: 1000 });
+    autoPanel.classList.remove('show');
+    manualPanel.classList.remove('hidden');
+    if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: 1000 }); // Báo ESP32 chuyển Mode Manual
 });
 
 btnAuto.addEventListener('click', () => {
     btnAuto.classList.add('active-auto');
     btnManual.classList.remove('active-manual');
-    if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: 2000 });
+    autoPanel.classList.add('show');
+    manualPanel.classList.add('hidden');
+    renderUI();
+    if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: 2000 }); // Báo ESP32 chờ lệnh Goto
 });
+
+// --- ĐIỀU KHIỂN TAY MANUAL ---
+function sendV1(v) { document.getElementById('labelRight').textContent = v; if(actionV1) eraWidget.triggerAction(actionV1.action, null, {value: v}); }
+function sendV2(v) { document.getElementById('labelLeft').textContent = v; if(actionV2) eraWidget.triggerAction(actionV2.action, null, {value: v}); }
+
+const bindBtn = (id, vDown, vUp, func) => {
+    const b = document.getElementById(id);
+    b.addEventListener('pointerdown', () => func(vDown));
+    b.addEventListener('pointerup', () => func(vUp));
+    b.addEventListener('pointerleave', () => func(vUp));
+};
+
+bindBtn('btnUp', 2025, 1494, sendV1);
+bindBtn('btnDown', 1027, 1494, sendV1);
+bindBtn('btnLeft', 987, 1497, sendV2);
+bindBtn('btnRight', 1983, 1497, sendV2);
+
+// Khởi tạo hiển thị lần đầu
+renderUI();
