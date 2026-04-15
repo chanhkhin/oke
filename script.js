@@ -1,51 +1,66 @@
-// 1. Khởi tạo các biến toàn cục
+// Khởi tạo Widget
 const eraWidget = new EraWidget();
 let actionV1 = null;
 
-// Lấy các phần tử HTML
-const slider = document.getElementById('signalSlider');
-const label = document.getElementById('valLabel');
+// Lấy các thành phần giao diện
+const slider = document.getElementById('joystick');
+const label = document.getElementById('label');
 
-// 2. Kết nối và lấy cấu hình từ E-Ra Portal
+// Cấu hình E-Ra
 eraWidget.init({
     onConfiguration: (configuration) => {
-        // Giả định Action điều khiển chân V1 là action đầu tiên (index 0) trên Portal của bạn
+        // Lấy Action đầu tiên được cấu hình trên Portal (giả định là chân V1)
         if (configuration.actions && configuration.actions.length > 0) {
             actionV1 = configuration.actions[0];
-            console.log("Đã kết nối Action V1:", actionV1);
-        } else {
-            console.error("Chưa cấu hình Action trên E-Ra Portal!");
+            console.log("Đã tìm thấy chân điều khiển:", actionV1);
         }
     },
     onValues: (values) => {
-        // Chân V1 chỉ dùng để gửi lệnh (Write) nên không cần xử lý dữ liệu nhận về ở đây
+        // Không cần xử lý dữ liệu trả về cho nút nhấn/thanh trượt ghi dữ liệu
     }
 });
 
-// 3. Xử lý sự kiện khi kéo thanh trượt
+/**
+ * Xử lý khi người dùng đang kéo thanh trượt
+ */
 slider.addEventListener('input', function() {
-    const value = parseInt(this.value);
+    const val = parseInt(this.value);
+    label.textContent = val;
     
-    // Cập nhật số hiển thị trên màn hình
-    label.textContent = value;
-    
-    // Gửi lệnh xuống ESP32
+    // Gửi giá trị liên tục khi kéo
     if (actionV1) {
-        eraWidget.triggerAction(actionV1.action, null, { value: value });
+        eraWidget.triggerAction(actionV1.action, null, { value: val });
     }
 });
 
-// 4. Xử lý sự kiện khi nhấn nút Reset về 1500
-// Chú ý: Hàm này được gọi từ thuộc tính onclick trong file HTML
-window.resetToCenter = function() {
-    const centerValue = 1500;
+/**
+ * Xử lý khi buông tay (Dành cho máy tính)
+ */
+slider.addEventListener('mouseup', () => {
+    returnToCenter();
+});
+
+/**
+ * Xử lý khi buông tay (Dành cho điện thoại/cảm ứng)
+ */
+slider.addEventListener('touchend', () => {
+    returnToCenter();
+});
+
+/**
+ * Hàm đưa thanh trượt về giá trị trung tâm 1500
+ */
+function returnToCenter() {
+    const center = 1500;
     
     // Cập nhật giao diện
-    slider.value = centerValue;
-    label.textContent = centerValue;
+    slider.value = center;
+    label.textContent = center;
     
-    // Gửi lệnh 1500 xuống ESP32
+    // Gửi lệnh 1500 xuống ESP32 lần cuối
     if (actionV1) {
-        eraWidget.triggerAction(actionV1.action, null, { value: centerValue });
+        eraWidget.triggerAction(actionV1.action, null, { value: center });
     }
-};
+    
+    console.log("Joystick đã nhả - Gửi giá trị dừng: 1500");
+}
