@@ -3,57 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AGV Dual Control</title>
+    <title>AGV Button Control</title>
     <script src="https://www.unpkg.com/@eohjsc/era-widget@1.1.3/src/index.js"></script>
     <style>
         body { 
             font-family: 'Segoe UI', sans-serif; background: #121212; color: white; 
             margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+            /* Chống bôi đen, copy, zoom khi bấm giữ trên điện thoại */
+            user-select: none; -webkit-user-select: none; touch-action: none;
         }
         .header { text-align: center; padding: 15px; color: #00ffcc; font-weight: bold; font-size: 20px;}
         
-        /* Box chứa nút Auto/Manual */
         .mode-container { display: flex; justify-content: center; gap: 20px; padding: 10px; }
         .btn-mode {
-            padding: 15px 30px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px;
+            padding: 12px 25px; font-size: 14px; font-weight: bold; border: none; border-radius: 8px;
             cursor: pointer; background: #333; color: white; transition: 0.3s;
         }
         .btn-mode.active-manual { background: #FF5500; }
         .btn-mode.active-auto { background: #00ffcc; color: black; }
 
-        .controller-container { display: flex; justify-content: space-between; align-items: center; flex: 1; padding: 10px 40px; }
-        .joy-box { background: #1e1e1e; padding: 20px; border-radius: 20px; border: 1px solid #333; text-align: center; width: 180px; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center;}
+        .controller-container { display: flex; justify-content: space-between; align-items: center; flex: 1; padding: 0 30px; }
+        .joy-box { 
+            background: #1e1e1e; padding: 20px; border-radius: 20px; border: 1px solid #333; 
+            text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
         
-        .val-text { font-size: 24px; font-weight: bold; margin: 10px 0; color: #00ffcc; font-family: monospace; }
-        .label-text { font-size: 14px; color: #888; font-weight: bold; }
+        .val-text { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #00ffcc; font-family: monospace; }
+        .label-text { font-size: 14px; color: #888; font-weight: bold; margin-bottom: 10px; }
 
-        /* Khớp giới hạn thanh trượt với code ESP32 */
-        .slider-horizontal { width: 160px; cursor: pointer; outline: none; background: #444; border-radius: 10px;}
-        .slider-vertical { -webkit-appearance: slider-vertical; width: 30px; height: 200px; cursor: pointer; outline: none; background: #444; border-radius: 10px;}
+        /* Style cho nút điều khiển */
+        .ctrl-btn {
+            background: #444; border: 2px solid #555; color: white; font-size: 16px; font-weight: bold;
+            border-radius: 12px; cursor: pointer; transition: 0.1s; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .ctrl-btn:active, .ctrl-btn.active {
+            background: #00ffcc; color: black; border-color: #00ffcc; transform: scale(0.95);
+        }
+
+        /* Tay trái (Ngang) */
+        .pad-horizontal { display: flex; gap: 15px; }
+        .pad-horizontal .ctrl-btn { width: 80px; height: 60px; }
+
+        /* Tay phải (Dọc) */
+        .pad-vertical { display: flex; flex-direction: column; gap: 15px; }
+        .pad-vertical .ctrl-btn { width: 80px; height: 80px; }
     </style>
 </head>
 <body>
 
-    <div class="header">AGV CONTROL DASHBOARD</div>
+    <div class="header">AGV SMART BUTTONS</div>
 
     <div class="mode-container">
-        <button id="btnManual" class="btn-mode active-manual">MANUAL MODE</button>
-        <button id="btnAuto" class="btn-mode">AUTO MODE</button>
+        <button id="btnManual" class="btn-mode active-manual">MANUAL</button>
+        <button id="btnAuto" class="btn-mode">AUTO</button>
     </div>
 
     <div class="controller-container">
         <div class="joy-box">
             <span class="label-text">STEERING (V2)</span>
             <div class="val-text" id="labelLeft">1497</div>
-            <input type="range" id="joyLeft" min="987" max="1983" value="1497" class="slider-horizontal">
-            <span class="label-text" style="margin-top:10px;">Trái <-> Phải</span>
+            <div class="pad-horizontal">
+                <button id="btnLeft" class="ctrl-btn">◀ TRÁI</button>
+                <button id="btnRight" class="ctrl-btn">PHẢI ▶</button>
+            </div>
         </div>
 
         <div class="joy-box">
             <span class="label-text">THROTTLE (V1)</span>
             <div class="val-text" id="labelRight">1494</div>
-            <input type="range" id="joyRight" min="1027" max="2025" value="1494" class="slider-vertical">
-            <span class="label-text" style="margin-top:10px;">Tiến / Lùi</span>
+            <div class="pad-vertical">
+                <button id="btnUp" class="ctrl-btn">▲ TIẾN</button>
+                <button id="btnDown" class="ctrl-btn">▼ LÙI</button>
+            </div>
         </div>
     </div>
 
