@@ -1,5 +1,6 @@
 const eraWidget = new EraWidget();
-let actionV1, actionV2, actionV3, actionV4;
+let actionV1, actionV2, actionV3; // Các chân gửi lệnh xuống ESP32
+let configUID; // Chân nhận dữ liệu UID từ ESP32 gửi lên
 
 // Mảng chứa các UID đã thêm tạm thời chưa lưu
 let tempCheckpoints = []; 
@@ -12,20 +13,24 @@ const gotoListDiv = document.getElementById('gotoList');
 
 eraWidget.init({
     onConfiguration: (conf) => {
-        // Ánh xạ các chân điều khiển dựa theo thứ tự trên E-Ra config
+        // 1. Ánh xạ các chân điều khiển (Actions) dựa theo thứ tự trên E-Ra config
         if(conf.actions) {
             actionV1 = conf.actions[0]; // Throttle (V1)
             actionV2 = conf.actions[1]; // Steering (V2)
             actionV3 = conf.actions[2]; // Mode & Goto (Numeric - V3)
-            if(conf.actions.length > 3) {
-                actionV4 = conf.actions[3]; // Gửi/Nhận UID String (V4)
-            }
+        }
+        
+        // 2. Ánh xạ chân nhận dữ liệu (Realtime Configs)
+        // V4 nằm ở cấu hình "Giá trị hiện thời" đầu tiên nên là vị trí [0]
+        if(conf.realtime_configs && conf.realtime_configs.length > 0) {
+            configUID = conf.realtime_configs[0]; 
         }
     },
     onValues: (values) => {
-        // Lắng nghe dữ liệu UID gửi lên từ ESP32 qua chân V4
-        if (actionV4 && values[actionV4.id]) {
-            const receivedUID = values[actionV4.id].value;
+        // Lắng nghe dữ liệu UID gửi lên từ ESP32 qua chân V4 (Giá trị hiện thời)
+        if (configUID && values[configUID.id]) {
+            const receivedUID = values[configUID.id].value;
+            
             // Nếu có dữ liệu trả về, tự động điền vào ô input
             if (receivedUID && String(receivedUID).trim() !== "") {
                 uidInput.value = receivedUID;
@@ -71,9 +76,6 @@ function renderUI() {
                 // Gửi lệnh Số qua V3 (A=2001, B=2002, C=2003...) để ESP32 biết điểm đến
                 let cmdNumeric = 2001 + index;
                 if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: cmdNumeric });
-                
-                // Gửi kèm lệnh Chuỗi UID thẳng qua V4 để dự phòng
-                if (actionV4) eraWidget.triggerAction(actionV4.action, null, { value: cp.uid });
             });
             gotoListDiv.appendChild(btn);
         });
