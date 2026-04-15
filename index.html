@@ -3,82 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E-Ra Dual Joystick</title>
+    <title>AGV Dual Control</title>
     <script src="https://www.unpkg.com/@eohjsc/era-widget@1.1.3/src/index.js"></script>
     <style>
         body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: #121212; 
-            color: white; 
-            margin: 0; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column;
-            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif; background: #121212; color: white; 
+            margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
         }
-        .header { text-align: center; padding: 10px; color: #00ffcc; font-weight: bold; }
+        .header { text-align: center; padding: 15px; color: #00ffcc; font-weight: bold; font-size: 20px;}
         
-        /* Bố cục chia đôi trái phải */
-        .controller-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex: 1;
-            padding: 20px 50px;
+        /* Box chứa nút Auto/Manual */
+        .mode-container { display: flex; justify-content: center; gap: 20px; padding: 10px; }
+        .btn-mode {
+            padding: 15px 30px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px;
+            cursor: pointer; background: #333; color: white; transition: 0.3s;
         }
+        .btn-mode.active-manual { background: #FF5500; }
+        .btn-mode.active-auto { background: #00ffcc; color: black; }
 
-        .joy-box {
-            background: #1e1e1e;
-            padding: 20px;
-            border-radius: 20px;
-            border: 1px solid #333;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 200px;
-            height: 300px;
-        }
-
+        .controller-container { display: flex; justify-content: space-between; align-items: center; flex: 1; padding: 10px 40px; }
+        .joy-box { background: #1e1e1e; padding: 20px; border-radius: 20px; border: 1px solid #333; text-align: center; width: 180px; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center;}
+        
         .val-text { font-size: 24px; font-weight: bold; margin: 10px 0; color: #00ffcc; font-family: monospace; }
-        .label-text { font-size: 14px; color: #888; text-transform: uppercase; }
+        .label-text { font-size: 14px; color: #888; font-weight: bold; }
 
-        /* Style cho thanh trượt ngang (Trái) */
-        .slider-horizontal {
-            width: 180px;
-            cursor: pointer;
-        }
-
-        /* Style cho thanh trượt dọc (Phải) */
-        .slider-vertical {
-            -webkit-appearance: slider-vertical; /* Dành cho Webkit browsers */
-            width: 20px;
-            height: 200px;
-            cursor: pointer;
-        }
-
-        /* Custom track/thumb */
-        input[type="range"] { outline: none; background: #333; border-radius: 10px; }
+        /* Khớp giới hạn thanh trượt với code ESP32 */
+        .slider-horizontal { width: 160px; cursor: pointer; outline: none; background: #444; border-radius: 10px;}
+        .slider-vertical { -webkit-appearance: slider-vertical; width: 30px; height: 200px; cursor: pointer; outline: none; background: #444; border-radius: 10px;}
     </style>
 </head>
 <body>
 
-    <div class="header">E-RA DUAL JOYSTICK CONTROL</div>
+    <div class="header">AGV CONTROL DASHBOARD</div>
+
+    <div class="mode-container">
+        <button id="btnManual" class="btn-mode active-manual">MANUAL MODE</button>
+        <button id="btnAuto" class="btn-mode">AUTO MODE</button>
+    </div>
 
     <div class="controller-container">
         <div class="joy-box">
-            <span class="label-text">Steering (V2)</span>
-            <div class="val-text" id="labelLeft">1500</div>
-            <input type="range" id="joyLeft" min="1000" max="2000" value="1500" class="slider-horizontal">
-            <span class="label-text" style="margin-top:10px;">Trái - Phải</span>
+            <span class="label-text">STEERING (V2)</span>
+            <div class="val-text" id="labelLeft">1497</div>
+            <input type="range" id="joyLeft" min="987" max="1983" value="1497" class="slider-horizontal">
+            <span class="label-text" style="margin-top:10px;">Trái <-> Phải</span>
         </div>
 
         <div class="joy-box">
-            <span class="label-text">Drive (V1)</span>
-            <div class="val-text" id="labelRight">1500</div>
-            <input type="range" id="joyRight" min="1000" max="2000" value="1500" class="slider-vertical">
-            <span class="label-text" style="margin-top:10px;">Tiến - Lùi</span>
+            <span class="label-text">THROTTLE (V1)</span>
+            <div class="val-text" id="labelRight">1494</div>
+            <input type="range" id="joyRight" min="1027" max="2025" value="1494" class="slider-vertical">
+            <span class="label-text" style="margin-top:10px;">Tiến / Lùi</span>
         </div>
     </div>
 
