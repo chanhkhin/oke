@@ -3,21 +3,12 @@ let actionV1 = null; // Tiến Lùi
 let actionV2 = null; // Trái Phải
 let actionV3 = null; // Mode Auto/Manual
 
-const joyLeft = document.getElementById('joyLeft');
 const labelLeft = document.getElementById('labelLeft');
-const joyRight = document.getElementById('joyRight');
 const labelRight = document.getElementById('labelRight');
 
-const btnManual = document.getElementById('btnManual');
-const btnAuto = document.getElementById('btnAuto');
-
-let lastSendLeft = 0;
-let lastSendRight = 0;
-
+// Khởi tạo E-Ra
 eraWidget.init({
     onConfiguration: (configuration) => {
-        // Cấu hình Action trên Portal E-Ra:
-        // Index 0 -> V1, Index 1 -> V2, Index 2 -> V3
         if (configuration.actions && configuration.actions.length >= 3) {
             actionV1 = configuration.actions[0];
             actionV2 = configuration.actions[1];
@@ -26,66 +17,61 @@ eraWidget.init({
     }
 });
 
-// ================= XỬ LÝ CHẾ ĐỘ AUTO/MANUAL (V3) =================
+// ================= HÀM GỬI LỆNH TRỰC TIẾP =================
+function sendV1(value) {
+    labelRight.textContent = value;
+    if (actionV1) eraWidget.triggerAction(actionV1.action, null, { value: value });
+}
+
+function sendV2(value) {
+    labelLeft.textContent = value;
+    if (actionV2) eraWidget.triggerAction(actionV2.action, null, { value: value });
+}
+
+// ================= GẮN SỰ KIỆN CHO TAY PHẢI (V1: TIẾN / LÙI) =================
+const btnUp = document.getElementById('btnUp');
+const btnDown = document.getElementById('btnDown');
+const centerV1 = 1494; // Điểm dừng tuyệt đối
+
+// Nút Tiến
+btnUp.addEventListener('pointerdown', () => { btnUp.classList.add('active'); sendV1(2025); });
+btnUp.addEventListener('pointerup', () => { btnUp.classList.remove('active'); sendV1(centerV1); });
+btnUp.addEventListener('pointerleave', () => { btnUp.classList.remove('active'); sendV1(centerV1); });
+
+// Nút Lùi
+btnDown.addEventListener('pointerdown', () => { btnDown.classList.add('active'); sendV1(1027); });
+btnDown.addEventListener('pointerup', () => { btnDown.classList.remove('active'); sendV1(centerV1); });
+btnDown.addEventListener('pointerleave', () => { btnDown.classList.remove('active'); sendV1(centerV1); });
+
+
+// ================= GẮN SỰ KIỆN CHO TAY TRÁI (V2: TRÁI / PHẢI) =================
+const btnLeft = document.getElementById('btnLeft');
+const btnRight = document.getElementById('btnRight');
+const centerV2 = 1497; // Điểm dừng tuyệt đối
+
+// Nút Rẽ Trái
+btnLeft.addEventListener('pointerdown', () => { btnLeft.classList.add('active'); sendV2(987); });
+btnLeft.addEventListener('pointerup', () => { btnLeft.classList.remove('active'); sendV2(centerV2); });
+btnLeft.addEventListener('pointerleave', () => { btnLeft.classList.remove('active'); sendV2(centerV2); });
+
+// Nút Rẽ Phải
+btnRight.addEventListener('pointerdown', () => { btnRight.classList.add('active'); sendV2(1983); });
+btnRight.addEventListener('pointerup', () => { btnRight.classList.remove('active'); sendV2(centerV2); });
+btnRight.addEventListener('pointerleave', () => { btnRight.classList.remove('active'); sendV2(centerV2); });
+
+
+// ================= XỬ LÝ NÚT MODE AUTO/MANUAL (V3) =================
+const btnManual = document.getElementById('btnManual');
+const btnAuto = document.getElementById('btnAuto');
+
 btnManual.addEventListener('click', () => {
     btnManual.classList.add('active-manual');
     btnAuto.classList.remove('active-auto');
-    if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: 1000 }); // Gửi 1000 cho Manual
+    if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: 1000 });
 });
 
 btnAuto.addEventListener('click', () => {
     btnAuto.classList.add('active-auto');
     btnManual.classList.remove('active-manual');
-    if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: 2000 }); // Gửi 2000 cho Auto
+    if (actionV3) eraWidget.triggerAction(actionV3.action, null, { value: 2000 });
 });
-
-
-// ================= XỬ LÝ JOYSTICK =================
-joyLeft.addEventListener('input', function() {
-    const val = parseInt(this.value);
-    labelLeft.textContent = val;
-    sendData(val, 'left');
-});
-
-joyRight.addEventListener('input', function() {
-    const val = parseInt(this.value);
-    labelRight.textContent = val;
-    sendData(val, 'right');
-});
-
-// Hàm gửi dữ liệu có chống Spam (Throttle 100ms)
-function sendData(value, side) {
-    const now = Date.now();
-    if (side === 'left') {
-        if (now - lastSendLeft > 40 && actionV2) {
-            eraWidget.triggerAction(actionV2.action, null, { value: value });
-            lastSendLeft = now;
-        }
-    } else {
-        if (now - lastSendRight > 40 && actionV1) {
-            eraWidget.triggerAction(actionV1.action, null, { value: value });
-            lastSendRight = now;
-        }
-    }
-}
-
-// TỰ ĐỘNG VỀ GIỮA KHỚP 100% VỚI CODE ESP32 ĐỂ TRÁNH LỆCH DEADZONE
-const resetLeft = () => {
-    const centerLR = 1497;
-    joyLeft.value = centerLR;
-    labelLeft.textContent = centerLR;
-    if (actionV2) eraWidget.triggerAction(actionV2.action, null, { value: centerLR });
-};
-
-const resetRight = () => {
-    const centerFB = 1494;
-    joyRight.value = centerFB;
-    labelRight.textContent = centerFB;
-    if (actionV1) eraWidget.triggerAction(actionV1.action, null, { value: centerFB });
-};
-
-joyLeft.addEventListener('mouseup', resetLeft);
-joyLeft.addEventListener('touchend', resetLeft);
-
-joyRight.addEventListener('mouseup', resetRight);
-joyRight.addEventListener('touchend', resetRight);
