@@ -57,12 +57,12 @@ joyRight.addEventListener('input', function() {
 function sendData(value, side) {
     const now = Date.now();
     if (side === 'left') {
-        if (now - lastSendLeft > 100 && actionV2) {
+        if (now - lastSendLeft > 40 && actionV2) {
             eraWidget.triggerAction(actionV2.action, null, { value: value });
             lastSendLeft = now;
         }
     } else {
-        if (now - lastSendRight > 100 && actionV1) {
+        if (now - lastSendRight > 40 && actionV1) {
             eraWidget.triggerAction(actionV1.action, null, { value: value });
             lastSendRight = now;
         }
