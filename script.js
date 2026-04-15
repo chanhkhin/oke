@@ -1,81 +1,34 @@
-// Khởi tạo E-Ra Services 
 const eraWidget = new EraWidget();
+let actionV1 = null;
 
-// Các biến cấu hình cũ [cite: 756]
-let configTemp = null, configHumi = null;
-let onBedLight = null, offBedLight = null;
-let onKitchenLight = null, onLivingLight = null;
-let onAirConditioner = null;
-
-// Biến cho Joystick mới
-let onJoystick = null; 
-let lastSendTime = 0; // Để giới hạn tốc độ gửi tin nhắn
-
-// Các phần tử UI Joystick
-const jSlider = document.getElementById('joystickSlider');
-const jLabel = document.getElementById('joystickLabel');
-
+// Khởi tạo E-Ra Widget
 eraWidget.init({
     onConfiguration: (configuration) => {
-        // Map các chân cũ [cite: 765]
-        configTemp = configuration.realtime_configs[0];
-        configHumi = configuration.realtime_configs[1];
-        onBedLight = configuration.actions[0];
-        offBedLight = configuration.actions[1];
-        onKitchenLight = configuration.actions[2];
-        onLivingLight = configuration.actions[3];
-        onAirConditioner = configuration.actions[4];
-
-        // Lấy Action Joystick (Vị trí thứ 6 trên Portal)
-        if (configuration.actions.length > 5) {
-            onJoystick = configuration.actions[5];
+        // Lấy cấu hình action từ E-Ra Portal
+        // LƯU Ý: Bạn phải tạo một Action gán với chân V1 trên Portal.
+        // Giả sử Action này nằm ở vị trí đầu tiên (index 0) trong danh sách Actions.
+        if (configuration.actions && configuration.actions.length > 0) {
+            actionV1 = configuration.actions[0];
+            console.log("Đã nạp cấu hình Action V1:", actionV1);
         }
     },
     onValues: (values) => {
-        // Xử lý hiển thị nhiệt độ/độ ẩm realtime [cite: 773]
-        if (configTemp && values[configTemp.id]) {
-            updateTempGauge(values[configTemp.id].value);
-        }
-        if (configHumi && values[configHumi.id]) {
-            updateGauge(values[configHumi.id].value);
-        }
+        // Bỏ trống vì thanh trượt này chỉ gửi đi (Write), không đọc về (Read)
     }
 });
 
-// ============ LOGIC JOYSTICK V1 ============
+// Bắt sự kiện thanh trượt
+const slider = document.getElementById("mySlider");
+const valueDisplay = document.getElementById("sliderValue");
 
-if (jSlider && jLabel) {
-    // 1. Khi đang kéo (Gửi tín hiệu liên tục nhưng có giới hạn tốc độ)
-    jSlider.addEventListener('input', function() {
-        const val = parseInt(this.value);
-        jLabel.textContent = val;
+slider.addEventListener("input", function() {
+    const value = parseInt(this.value); // Ép kiểu về số nguyên giống param.getInt()
+    
+    // Cập nhật giá trị hiển thị trên màn hình
+    valueDisplay.textContent = value;
 
-        const now = Date.now();
-        // Chỉ gửi dữ liệu lên ESP nếu cách lần gửi trước ít nhất 100ms
-        // Điều này giúp tránh quá tải MQTT khi bạn kéo thanh trượt quá nhanh
-        if (now - lastSendTime > 100) {
-            if (onJoystick) {
-                eraWidget.triggerAction(onJoystick.action, null, { value: val });
-                lastSendTime = now;
-            }
-        }
-    });
-
-    // 2. Khi buông tay (Tự động về 1500)
-    const handleRelease = () => {
-        const center = 1500;
-        jSlider.value = center;
-        jLabel.textContent = center;
-        
-        // Gửi lệnh dừng 1500 ngay lập tức
-        if (onJoystick) {
-            eraWidget.triggerAction(onJoystick.action, null, { value: center });
-        }
-    };
-
-    jSlider.addEventListener('mouseup', handleRelease);
-    jSlider.addEventListener('touchend', handleRelease);
-}
-
-// ... [Giữ nguyên toàn bộ các hàm bổ trợ cũ như initChart, updateChart, loadSong...] ...
-// [Từ dòng 283 đến dòng 855 trong file script.js của bạn]
+    // Nếu cấu hình E-Ra đã tải xong, gửi lệnh xuống ESP32
+    if (actionV1) {
+        eraWidget.triggerAction(actionV1.action, null, { value: value });
+    }
+});
