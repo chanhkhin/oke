@@ -2,22 +2,84 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Ra Joystick 1000-2000</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>E-Ra Dual Joystick</title>
     <script src="https://www.unpkg.com/@eohjsc/era-widget@1.1.3/src/index.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; text-align: center; background: #121212; color: white; }
-        .slider-container { margin-top: 50px; }
-        input[type="range"] { width: 300px; height: 15px; cursor: pointer; }
-        .value-display { font-size: 32px; font-weight: bold; margin-top: 20px; color: #00ffcc; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #121212; 
+            color: white; 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header { text-align: center; padding: 10px; color: #00ffcc; font-weight: bold; }
+        
+        /* Bố cục chia đôi trái phải */
+        .controller-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex: 1;
+            padding: 20px 50px;
+        }
+
+        .joy-box {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 200px;
+            height: 300px;
+        }
+
+        .val-text { font-size: 24px; font-weight: bold; margin: 10px 0; color: #00ffcc; font-family: monospace; }
+        .label-text { font-size: 14px; color: #888; text-transform: uppercase; }
+
+        /* Style cho thanh trượt ngang (Trái) */
+        .slider-horizontal {
+            width: 180px;
+            cursor: pointer;
+        }
+
+        /* Style cho thanh trượt dọc (Phải) */
+        .slider-vertical {
+            -webkit-appearance: slider-vertical; /* Dành cho Webkit browsers */
+            width: 20px;
+            height: 200px;
+            cursor: pointer;
+        }
+
+        /* Custom track/thumb */
+        input[type="range"] { outline: none; background: #333; border-radius: 10px; }
     </style>
 </head>
 <body>
-    <h2>Joystick Control (V1)</h2>
-    
-    <div class="slider-container">
-        <input type="range" id="mySlider" min="1000" max="2000" value="1500">
-        <div class="value-display">Giá trị: <span id="sliderValue">1500</span></div>
+
+    <div class="header">E-RA DUAL JOYSTICK CONTROL</div>
+
+    <div class="controller-container">
+        <div class="joy-box">
+            <span class="label-text">Steering (V2)</span>
+            <div class="val-text" id="labelLeft">1500</div>
+            <input type="range" id="joyLeft" min="1000" max="2000" value="1500" class="slider-horizontal">
+            <span class="label-text" style="margin-top:10px;">Trái - Phải</span>
+        </div>
+
+        <div class="joy-box">
+            <span class="label-text">Drive (V1)</span>
+            <div class="val-text" id="labelRight">1500</div>
+            <input type="range" id="joyRight" min="1000" max="2000" value="1500" class="slider-vertical">
+            <span class="label-text" style="margin-top:10px;">Tiến - Lùi</span>
+        </div>
     </div>
 
     <script src="script.js"></script>
