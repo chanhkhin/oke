@@ -4,31 +4,46 @@ let actionV1 = null;
 // Khởi tạo E-Ra Widget
 eraWidget.init({
     onConfiguration: (configuration) => {
-        // Lấy cấu hình action từ E-Ra Portal
-        // LƯU Ý: Bạn phải tạo một Action gán với chân V1 trên Portal.
-        // Giả sử Action này nằm ở vị trí đầu tiên (index 0) trong danh sách Actions.
         if (configuration.actions && configuration.actions.length > 0) {
             actionV1 = configuration.actions[0];
             console.log("Đã nạp cấu hình Action V1:", actionV1);
         }
     },
     onValues: (values) => {
-        // Bỏ trống vì thanh trượt này chỉ gửi đi (Write), không đọc về (Read)
+        // Bỏ trống
     }
 });
 
-// Bắt sự kiện thanh trượt
 const slider = document.getElementById("mySlider");
 const valueDisplay = document.getElementById("sliderValue");
 
+// 1. Khi đang kéo thanh trượt (Gửi dữ liệu liên tục)
 slider.addEventListener("input", function() {
-    const value = parseInt(this.value); // Ép kiểu về số nguyên giống param.getInt()
+    const value = parseInt(this.value); 
     
-    // Cập nhật giá trị hiển thị trên màn hình
     valueDisplay.textContent = value;
 
-    // Nếu cấu hình E-Ra đã tải xong, gửi lệnh xuống ESP32
     if (actionV1) {
         eraWidget.triggerAction(actionV1.action, null, { value: value });
     }
 });
+
+// ================= THÊM PHẦN JOYSTICK Ở ĐÂY =================
+
+// 2. Hàm đưa thanh trượt về vị trí trung tâm
+function returnToCenter() {
+    const centerValue = 127; // Trục giữa của 0 - 255
+    
+    // Cập nhật lại giao diện
+    slider.value = centerValue;
+    valueDisplay.textContent = centerValue;
+
+    // Gửi lệnh 127 xuống ESP32 để dừng động cơ
+    if (actionV1) {
+        eraWidget.triggerAction(actionV1.action, null, { value: centerValue });
+    }
+}
+
+// 3. Bắt sự kiện khi buông tay
+slider.addEventListener("mouseup", returnToCenter); // Khi nhả chuột (trên máy tính)
+slider.addEventListener("touchend", returnToCenter); // Khi nhả tay (trên điện thoại)
