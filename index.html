@@ -1,23 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Slider V1</title>
+    <title>E-Ra Servo Control</title>
     <script src="https://www.unpkg.com/@eohjsc/era-widget@1.1.3/src/index.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-        .slider-container { margin-top: 50px; }
-        input[type="range"] { width: 300px; }
-        .value-display { font-size: 24px; font-weight: bold; margin-top: 20px; color: #FF5500; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a1a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #2d2d2d; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 350px; }
+        .value-display { font-size: 48px; font-weight: bold; color: #00ffcc; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0,255,204,0.3); }
+        input[type="range"] { width: 100%; height: 10px; border-radius: 5px; background: #444; outline: none; -webkit-appearance: none; margin: 20px 0; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; background: #00ffcc; border-radius: 50%; cursor: pointer; transition: 0.2s; }
+        button { background: #444; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #555; }
     </style>
 </head>
 <body>
-    <h2>Điều khiển Slider V1</h2>
-    
-    <div class="slider-container">
-        <input type="range" id="mySlider" min="0" max="255" value="0">
-        <div class="value-display">Giá trị: <span id="sliderValue">0</span></div>
+    <div class="card">
+        <h3>Control Signal (V1)</h3>
+        <div class="value-display" id="valLabel">1500</div>
+        <input type="range" id="signalSlider" min="1000" max="2000" value="1500">
+        <br>
+        <button onclick="resetToCenter()">Reset to Center (1500)</button>
     </div>
 
     <script src="script.js"></script>
